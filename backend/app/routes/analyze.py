@@ -1,15 +1,3 @@
-# from fastapi import APIRouter, UploadFile, File
-
-# router = APIRouter()
-
-# @router.post("/analyze/")
-# async def analyze(csv_file: UploadFile = File(...), image: UploadFile = File(...)):
-#     return {
-#         "message": "API working",
-#         "profit": 100,
-#         "status": "PROFIT 🟢"
-#     }
-
 from fastapi import APIRouter, UploadFile, File
 from app.utils.file_handler import save_file
 from app.services.ocr_service import extract_text
