@@ -1,6 +1,8 @@
+import { useState } from "react";
 import UploadForm from "./components/UploadForm";
 
 function App() {
+  const [result, setResult] = useState(null);
   return (
     <div style={{ display: "flex" }}>
       
@@ -27,8 +29,26 @@ function App() {
         padding: "20px",
         backgroundColor: "#f3f4f6"
       }}>
-        <UploadForm />
+        <UploadForm setResult={setResult}/>
         <h1>Dashboard</h1>
+        <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
+  
+  <div style={{ background: "white", padding: "15px", borderRadius: "8px" }}>
+    <h4>Profit</h4>
+    <h2>{result ? `₹ ${result.profit}` : "₹ 0"}</h2>
+  </div>
+
+  <div style={{ background: "white", padding: "15px", borderRadius: "8px" }}>
+    <h4>Revenue</h4>
+    <h2>{result ? `₹ ${result.revenue}` : "₹ 0"}</h2>
+  </div>
+
+  <div style={{ background: "white", padding: "15px", borderRadius: "8px" }}>
+    <h4>Cost</h4>
+    <h2>{result ? `₹ ${result.cost}` : "₹ 0"}</h2>
+  </div>
+
+</div>
       </div>
 
     </div>
