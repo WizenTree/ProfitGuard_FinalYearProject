@@ -59,7 +59,7 @@ MongoDB Atlas
 #### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/WizenTree/ProfitGuard_FinalYearProject/
 cd ProfitGuard_FinalYearProject
 ```
 
