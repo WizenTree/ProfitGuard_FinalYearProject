@@ -19,21 +19,36 @@ async def create_transaction(data: TransactionRequest):
     # CALCULATIONS
     quantity = data.quantity
 
+    # FIX: Shipping and fees are usually totals per transaction, not per item.
     total_revenue = data.selling_price * quantity
-    total_cost = (data.cost_price + data.shipping + data.fees) * quantity
+    total_cost = (data.cost_price * quantity) + data.shipping + data.fees
     profit = total_revenue - total_cost if data.type == "sale" else 0
 
-    # PURCHASE LOGIC
+    # ... inside PURCHASE LOGIC ...
     if data.type == "purchase":
-
         if product:
             new_stock = product["stock"] + quantity
-
-            # weighted avg cost (ONLY cost_price matters here)
+            
             total_existing_cost = product["avg_cost"] * product["stock"]
-            total_new_cost = data.cost_price * quantity
+            # FIX: Factor shipping and fees into the new average cost of the items
+            total_new_cost = (data.cost_price * quantity) + data.shipping + data.fees
 
             avg_cost = (total_existing_cost + total_new_cost) / new_stock
+    # total_revenue = data.selling_price * quantity
+    # total_cost = (data.cost_price + data.shipping + data.fees) * quantity
+    # profit = total_revenue - total_cost if data.type == "sale" else 0
+
+    # # PURCHASE LOGIC
+    # if data.type == "purchase":
+
+    #     if product:
+    #         new_stock = product["stock"] + quantity
+
+    #         # weighted avg cost (ONLY cost_price matters here)
+    #         total_existing_cost = product["avg_cost"] * product["stock"]
+    #         total_new_cost = data.cost_price * quantity
+
+    #         avg_cost = (total_existing_cost + total_new_cost) / new_stock
 
             products.update_one(
                 {"name": normalized_name},
@@ -99,5 +114,8 @@ async def create_transaction(data: TransactionRequest):
     }
 
     transactions.insert_one(transaction)
+    
+    # FIX: Remove the ObjectId before returning the dictionary
+    transaction.pop("_id", None) 
 
     return transaction
