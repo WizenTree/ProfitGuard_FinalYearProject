@@ -19,9 +19,11 @@ def safe_float(value):
         return 0.0
 
 
+# In backend/app/routes/bulk_upload.py
 def safe_int(value):
     try:
-        return int(value)
+        # FIX: Handle string floats like "4.0" before converting to int
+        return int(float(value)) 
     except:
         return 0
 
@@ -49,11 +51,17 @@ async def bulk_upload(file: UploadFile = File(...)):
 
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files allowed")
-
+    
     content = await file.read()
-    decoded = content.decode("utf-8")
+    # FIX: Use utf-8-sig to safely strip hidden Excel characters
+    decoded = content.decode("utf-8-sig") 
 
     reader = csv.DictReader(StringIO(decoded), delimiter=",")
+
+    # content = await file.read()
+    # decoded = content.decode("utf-8")
+
+    # reader = csv.DictReader(StringIO(decoded), delimiter=",")
 
     # fallback if CSV is weird
     if reader.fieldnames is None or len(reader.fieldnames) <= 1:
@@ -86,12 +94,18 @@ async def bulk_upload(file: UploadFile = File(...)):
             product = products.find_one({"name": normalized_name})
 
             # 🧮 CALCULATIONS
+
+            # CALCULATIONS - FIX: Only multiply cost_price by quantity
             total_revenue = selling_price * quantity
-            total_cost = (cost_price + shipping + fees) * quantity
+            total_cost = (cost_price * quantity) + shipping + fees
             profit = total_revenue - total_cost if type_ == "sale" else 0
+            # total_revenue = selling_price * quantity
+            # total_cost = (cost_price + shipping + fees) * quantity
+            # profit = total_revenue - total_cost if type_ == "sale" else 0
+
 
             # =========================
-            # 🟢 PURCHASE LOGIC
+            # 🛒 PURCHASE LOGIC
             # =========================
             if type_ == "purchase":
 
@@ -99,9 +113,11 @@ async def bulk_upload(file: UploadFile = File(...)):
                     new_stock = product["stock"] + quantity
 
                     total_existing_cost = product["avg_cost"] * product["stock"]
-                    total_new_cost = cost_price * quantity
+                    # FIX: Include shipping and fees in the cost basis
+                    total_new_cost = (cost_price * quantity) + shipping + fees
 
-                    avg_cost = (total_existing_cost + total_new_cost) / new_stock
+                    # FIX: Prevent ZeroDivisionError
+                    avg_cost = (total_existing_cost + total_new_cost) / new_stock if new_stock > 0 else 0
 
                     products.update_one(
                         {"name": normalized_name},
@@ -122,6 +138,39 @@ async def bulk_upload(file: UploadFile = File(...)):
                         "created_at": created_at,
                         "updated_at": created_at
                     })
+
+            # # =========================
+            # # 🟢 PURCHASE LOGIC
+            # # =========================
+            # if type_ == "purchase":
+
+            #     if product:
+            #         new_stock = product["stock"] + quantity
+
+            #         total_existing_cost = product["avg_cost"] * product["stock"]
+            #         total_new_cost = cost_price * quantity
+
+            #         avg_cost = (total_existing_cost + total_new_cost) / new_stock
+
+            #         products.update_one(
+            #             {"name": normalized_name},
+            #             {
+            #                 "$set": {
+            #                     "stock": new_stock,
+            #                     "avg_cost": avg_cost,
+            #                     "updated_at": created_at
+            #                 }
+            #             }
+            #         )
+            #     else:
+            #         products.insert_one({
+            #             "name": normalized_name,
+            #             "display_name": display_name,
+            #             "stock": quantity,
+            #             "avg_cost": cost_price,
+            #             "created_at": created_at,
+            #             "updated_at": created_at
+            #         })
 
             # =========================
             # 🔴 SALE LOGIC
