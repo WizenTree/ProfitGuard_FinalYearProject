@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getInventory } from "../services/api";
+import { getInventory, deleteProduct } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
 function Inventory() {
@@ -20,6 +20,22 @@ function Inventory() {
     };
     fetchInventory();
   }, []);
+
+  // ✅ NEW: Delete Handler
+  const handleDelete = async (productName, displayName) => {
+    const isConfirmed = window.confirm(`Are you sure you want to delete "${displayName}"? This will remove it from your catalog.`);
+    
+    if (isConfirmed) {
+      try {
+        await deleteProduct(productName);
+        // Optimistic UI Update: Remove item from state without refreshing the page
+        setInventory(prev => prev.filter(item => item.name !== productName));
+      } catch (error) {
+        console.error("Failed to delete product:", error);
+        alert("❌ Failed to delete product. Please try again.");
+      }
+    }
+  };
 
   const thStyle = {
     padding: "14px 12px",
@@ -57,6 +73,7 @@ function Inventory() {
                     <th style={thStyle}>Avg. Cost Price</th>
                     <th style={thStyle}>Total Asset Value</th>
                     <th style={thStyle}>Last Updated</th>
+                    <th style={{ ...thStyle, textAlign: "center" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -71,6 +88,27 @@ function Inventory() {
                         <td style={tdStyle}>₹{item.avg_cost.toFixed(2)}</td>
                         <td style={tdStyle}>₹{assetValue}</td>
                         <td style={tdStyle}>{new Date(item.updated_at).toLocaleDateString()}</td>
+                        <td style={{ ...tdStyle, textAlign: "center" }}>
+                          {/* Clean Delete Button */}
+                          <button 
+                            onClick={() => handleDelete(item.name, item.display_name)}
+                            title="Delete Product"
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              fontSize: "16px",
+                              padding: "6px",
+                              borderRadius: "4px",
+                              transition: "background 0.2s"
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
+                            onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
+                          >
+                            🗑️
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
