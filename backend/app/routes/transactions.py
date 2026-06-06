@@ -15,28 +15,36 @@ async def get_transactions(type: str = None):
 
     for txn in transactions.find(query).sort("created_at", -1):
 
-        # ✅ fallback for old DB data
-        selling_price = txn.get("selling_price", txn.get("price", 0))
-        cost_price = txn.get("cost_price", 0)
+        # 1. Calculate values with safe defaults
+        selling_price = txn.get("selling_price", txn.get("price", 0)) or 0
+        cost_price = txn.get("cost_price", 0) or 0
+        quantity = txn.get("quantity", 0) or 0
+        
+        # Calculate revenue/cost if not present in DB, handling potential None values
+        total_revenue = txn.get("total_revenue", selling_price * quantity)
+        total_cost = txn.get("total_cost", cost_price * quantity)
+        
+        # 2. Sanitize profit specifically to avoid the ValidationError
+        profit_val = txn.get("profit")
+        if profit_val is None:
+            profit_val = 0.0
 
-        total_revenue = txn.get("total_revenue", selling_price * txn.get("quantity", 0))
-        total_cost = txn.get("total_cost", cost_price * txn.get("quantity", 0))
-
+        # 3. Append only once
         items.append(
             TransactionItem(
                 product=txn.get("product", ""),
                 display_name=txn.get("display_name", txn.get("product", "")),
                 type=txn.get("type", ""),
-                quantity=txn.get("quantity", 0),
+                quantity=quantity,
 
-                selling_price=selling_price,
-                cost_price=cost_price,
-                shipping=txn.get("shipping", 0),
-                fees=txn.get("fees", 0),
+                selling_price=float(selling_price),
+                cost_price=float(cost_price),
+                shipping=txn.get("shipping", 0) or 0.0,
+                fees=txn.get("fees", 0) or 0.0,
 
-                total_revenue=total_revenue,
-                total_cost=total_cost,
-                profit=txn.get("profit", 0),
+                total_revenue=float(total_revenue),
+                total_cost=float(total_cost),
+                profit=float(profit_val), # Use the sanitized value
 
                 created_at=txn.get("created_at")
             )

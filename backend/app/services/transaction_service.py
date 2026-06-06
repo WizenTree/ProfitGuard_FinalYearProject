@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from app.models.database import products, transactions
 from app.utils.helpers import normalize_product_name, format_display_name
+from decimal import Decimal
 
 class TransactionService:
     """
@@ -11,12 +12,20 @@ class TransactionService:
 
     @staticmethod
     def _calculate_financials(data, quantity):
-        """Private method to abstract mathematical calculations (Encapsulation)."""
-        total_revenue = data.selling_price * quantity
-        total_cost = (data.cost_price * quantity) + data.shipping + data.fees
-        profit = total_revenue - total_cost if data.type == "sale" else 0
-        return total_revenue, total_cost, profit
-
+        qty = Decimal(str(quantity))
+        sp = Decimal(str(data.selling_price))
+        cp = Decimal(str(data.cost_price))
+        ship = Decimal(str(data.shipping))
+        fees = Decimal(str(data.fees))
+        
+        total_revenue = sp * qty
+        total_cost = (cp * qty) + ship + fees
+        profit = total_revenue - total_cost if data.type == "sale" else Decimal("0")
+        
+        # Return as float for MongoDB compatibility
+        return float(total_revenue), float(total_cost), float(profit)
+    
+    
     @classmethod
     def _handle_purchase(cls, data, normalized_name, display_name, quantity, now):
         """Handles inventory updates for incoming stock."""
