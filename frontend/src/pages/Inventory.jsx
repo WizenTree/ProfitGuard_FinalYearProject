@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { getInventory } from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 function Inventory() {
+  const { theme } = useTheme();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,68 +21,65 @@ function Inventory() {
     fetchInventory();
   }, []);
 
-  const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
-    textAlign: "left",
-    color: "white",
-    marginTop: "20px"
-  };
-
   const thStyle = {
-    padding: "12px",
-    borderBottom: "2px solid #374151",
-    color: "#9ca3af",
-    fontWeight: "bold"
+    padding: "14px 12px",
+    borderBottom: `2px solid ${theme.border}`,
+    color: theme.textMuted,
+    fontWeight: "600",
+    textAlign: "left"
   };
 
   const tdStyle = {
-    padding: "12px",
-    borderBottom: "1px solid #374151",
+    padding: "14px 12px",
+    borderBottom: `1px solid ${theme.border}`,
+    color: theme.text
   };
 
   return (
-    <div style={{ background: "#111827", minHeight: "100vh", padding: "30px", color: "white" }}>
-      <h1>Inventory Management</h1>
-      <p style={{ color: "#9ca3af" }}>Track your current stock levels and asset valuation.</p>
+    <div style={{ background: theme.bg, minHeight: "100vh", padding: "40px", color: theme.text, transition: "all 0.3s ease" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        
+        <h1 style={{ margin: "0 0 8px 0", fontSize: "28px" }}>Inventory Management</h1>
+        <p style={{ color: theme.textMuted, marginBottom: "32px" }}>Track your current stock levels and asset valuation.</p>
 
-      {loading ? (
-        <p>Loading inventory...</p>
-      ) : (
-        <div style={{ background: "#1f2937", padding: "20px", borderRadius: "12px", overflowX: "auto" }}>
-          {inventory.length === 0 ? (
-            <p style={{ color: "#9ca3af" }}>No inventory data available.</p>
-          ) : (
-            <table style={tableStyle}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Product Name</th>
-                  <th style={thStyle}>Stock Level</th>
-                  <th style={thStyle}>Avg. Cost Price</th>
-                  <th style={thStyle}>Total Asset Value</th>
-                  <th style={thStyle}>Last Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventory.map((item, index) => {
-                  const assetValue = (item.stock * item.avg_cost).toFixed(2);
-                  return (
-                    <tr key={index}>
-                      <td style={tdStyle}>{item.display_name}</td>
-                      <td style={{ ...tdStyle, color: item.stock < 10 ? "#ef4444" : "#10b981" }}>
-                        {item.stock} {item.stock < 10 && "(Low)"}
-                      </td>
-                      <td style={tdStyle}>₹{item.avg_cost.toFixed(2)}</td>
-                      <td style={tdStyle}>₹{assetValue}</td>
-                      <td style={tdStyle}>{new Date(item.updated_at).toLocaleDateString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+        {loading ? (
+          <p style={{ color: theme.textMuted }}>Loading inventory...</p>
+        ) : (
+          <div style={{ background: theme.cardBg, padding: "24px", borderRadius: "12px", border: `1px solid ${theme.border}`, boxShadow: theme.shadow, overflowX: "auto" }}>
+            {inventory.length === 0 ? (
+              <p style={{ color: theme.textMuted }}>No inventory data available.</p>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>Product Name</th>
+                    <th style={thStyle}>Stock Level</th>
+                    <th style={thStyle}>Avg. Cost Price</th>
+                    <th style={thStyle}>Total Asset Value</th>
+                    <th style={thStyle}>Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventory.map((item, index) => {
+                    const assetValue = (item.stock * item.avg_cost).toFixed(2);
+                    return (
+                      <tr key={index}>
+                        <td style={{ ...tdStyle, fontWeight: "500" }}>{item.display_name}</td>
+                        <td style={{ ...tdStyle, color: item.stock < 10 ? "#ef4444" : "#10b981", fontWeight: "600" }}>
+                          {item.stock} {item.stock < 10 && " (Low)"}
+                        </td>
+                        <td style={tdStyle}>₹{item.avg_cost.toFixed(2)}</td>
+                        <td style={tdStyle}>₹{assetValue}</td>
+                        <td style={tdStyle}>{new Date(item.updated_at).toLocaleDateString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import UploadForm from "../components/UploadForm";
-import { theme } from "../styles/theme";
+import { createTransaction } from "../services/api"; // Clean API call
+import { useTheme } from "../context/ThemeContext";
 
 function AddTransaction({ setResult }) {
+  const { theme } = useTheme();
+  
   const [formData, setFormData] = useState({
     product: "",
     type: "sale",
@@ -14,117 +17,54 @@ function AddTransaction({ setResult }) {
     date: new Date().toISOString().split('T')[0]
   });
 
-  // State for professional button interactions
-  const [isHovered, setIsHovered] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // 🚀 BACKEND CALL
   const handleManualSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const response = await fetch("http://127.0.0.1:8000/transaction/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          product: formData.product,
-          type: formData.type,
-          quantity: Number(formData.quantity),
-          selling_price: Number(formData.selling_price) || 0,
-          cost_price: Number(formData.cost_price) || 0,
-          shipping: Number(formData.shipping) || 0,
-          fees: Number(formData.fees) || 0,
-          date: formData.date
-        })
-      });
+      setLoading(true);
+      
+      const payload = {
+        ...formData,
+        quantity: Number(formData.quantity),
+        selling_price: Number(formData.selling_price) || 0,
+        cost_price: Number(formData.cost_price) || 0,
+        shipping: Number(formData.shipping) || 0,
+        fees: Number(formData.fees) || 0,
+      };
 
-      const data = await response.json();
+      const data = await createTransaction(payload);
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to add transaction");
+      if (setResult) {
+        setResult({
+          parsed_data: { product: data.product },
+          profit_data: { profit: data.profit },
+          suggestions: [`Added ${data.quantity}x ${data.display_name} (${data.type})`]
+        });
       }
 
-      // ✅ Send backend result to dashboard
-      setResult({
-        parsed_data: {
-          product: data.product,
-        },
-        profit_data: {
-          profit: data.profit,
-        },
-        suggestions: [
-          `Added ${data.quantity}x ${data.product} (${data.type})`
-        ]
-      });
-
       alert("✅ Transaction Added Successfully!");
-
-      // Reset form
-      setFormData({
-        product: "",
-        type: "sale",
-        quantity: 1,
-        selling_price: "",
-        cost_price: "",
-        shipping: "",
-        fees: "",
-        date: new Date().toISOString().split('T')[0]
-      });
-
+      setFormData({ ...formData, product: "", selling_price: "", cost_price: "", shipping: "", fees: "" });
     } catch (error) {
       console.error(error);
-      alert("❌ Error: " + error.message);
+      alert("❌ Error: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // UI Styles - Premium Dark Neutral Theme
-  const pageStyle = {
-    background: "#0f172a", // Deep slate background
-    minHeight: "100vh",
-    color: "#f8fafc",
-    padding: "40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start" 
-  };
-
-  const contentWrapper = {
-    width: "100%",
-    maxWidth: "800px", 
-    display: "flex",
-    flexDirection: "column",
-    gap: "32px"
-  };
-
+  // Themed Styles
   const cardStyle = {
-    background: "#1e293b", // Lighter slate for cards
+    background: theme.cardBg,
     padding: "32px",
     borderRadius: "12px",
-    border: "1px solid #334155", 
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)"
-  };
-
-  const sectionTitle = {
-    marginTop: 0,
-    marginBottom: "8px",
-    color: "#f8fafc",
-    fontSize: "20px",
-    fontWeight: "600",
-    letterSpacing: "0.5px"
-  };
-
-  const sectionDesc = {
-    fontSize: "14px",
-    color: "#94a3b8",
-    marginBottom: "24px",
-    lineHeight: "1.5"
+    border: `1px solid ${theme.border}`, 
+    boxShadow: theme.shadow
   };
 
   const inputStyle = {
@@ -132,9 +72,9 @@ function AddTransaction({ setResult }) {
     padding: "12px 14px",
     marginTop: "8px",
     borderRadius: "8px",
-    border: "1px solid #475569",
-    background: "#0f172a", 
-    color: "#e2e8f0",
+    border: `1px solid ${theme.border}`,
+    background: theme.bg, 
+    color: theme.text,
     fontSize: "14px",
     boxSizing: "border-box",
     outline: "none",
@@ -143,67 +83,29 @@ function AddTransaction({ setResult }) {
 
   const labelStyle = {
     fontSize: "13px",
-    color: "#cbd5e1",
+    color: theme.textMuted,
     fontWeight: "500",
     display: "block"
   };
 
-  const rowStyle = {
-    display: "flex",
-    gap: "20px",
-    marginBottom: "20px",
-    flexWrap: "wrap"
-  };
-
-  // Premium Button Styling with State-Driven Effects
-  const buttonStyle = {
-    background: isActive 
-      ? "#1e293b" // Pressed state: dark flat
-      : isHovered 
-      ? "linear-gradient(180deg, #475569 0%, #334155 100%)" // Hover state: lighter gradient
-      : "linear-gradient(180deg, #334155 0%, #1e293b 100%)", // Default state: subtle gradient
-    color: "#f8fafc",
-    padding: "14px",
-    width: "100%",
-    border: "1px solid #475569",
-    borderTop: isActive ? "1px solid #475569" : "1px solid #64748b", // Top highlight unless pressed
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    marginTop: "16px",
-    fontSize: "15px",
-    letterSpacing: "0.5px",
-    boxShadow: isActive
-      ? "inset 0 2px 4px rgba(0,0,0,0.4)" // Pressed: sinks in
-      : isHovered
-      ? "0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" // Hover: raises up slightly
-      : "0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)", // Default: subtle depth
-    textShadow: "0 1px 2px rgba(0,0,0,0.4)", // Makes text crisp
-    transform: isActive ? "translateY(1px)" : isHovered ? "translateY(-1px)" : "translateY(0)", // Physical movement
-    transition: "all 0.15s ease" // Smooth snapping
-  };
-
   return (
-    <div style={pageStyle}>
-      <div style={contentWrapper}>
+    <div style={{ background: theme.bg, minHeight: "100vh", color: theme.text, padding: "40px", display: "flex", flexDirection: "column", alignItems: "flex-start", transition: "all 0.3s ease" }}>
+      <div style={{ width: "100%", maxWidth: "800px", display: "flex", flexDirection: "column", gap: "32px" }}>
         
-        {/* Page Header */}
         <div>
           <h1 style={{ margin: "0 0 8px 0", fontSize: "28px", fontWeight: "600" }}>Add Transactions</h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          <p style={{ color: theme.textMuted, margin: 0, fontSize: "16px" }}>
             Log your business transactions manually or import bulk data.
           </p>
         </div>
 
-        {/* 🔹 1. MANUAL ENTRY (Top Focus) */}
+        {/* Manual Entry Form */}
         <div style={cardStyle}>
-          <h2 style={sectionTitle}>Manual Entry</h2>
-          <p style={sectionDesc}>Enter the details of a single purchase or sale transaction.</p>
+          <h2 style={{ marginTop: 0, marginBottom: "8px", fontSize: "20px" }}>Manual Entry</h2>
+          <p style={{ fontSize: "14px", color: theme.textMuted, marginBottom: "24px" }}>Enter the details of a single purchase or sale transaction.</p>
 
           <form onSubmit={handleManualSubmit}>
-            
-            {/* Row 1: Product, Type, Date */}
-            <div style={rowStyle}>
+            <div style={{ display: "flex", gap: "20px", marginBottom: "20px", flexWrap: "wrap" }}>
               <div style={{ flex: 2, minWidth: "200px" }}>
                 <label style={labelStyle}>Product Name</label>
                 <input name="product" placeholder="e.g. Wireless Mouse" value={formData.product} onChange={handleInputChange} style={inputStyle} required />
@@ -221,8 +123,7 @@ function AddTransaction({ setResult }) {
               </div>
             </div>
 
-            {/* Row 2: Quantity, Cost Price, Selling Price */}
-            <div style={rowStyle}>
+            <div style={{ display: "flex", gap: "20px", marginBottom: "20px", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: "120px" }}>
                 <label style={labelStyle}>Quantity</label>
                 <input type="number" name="quantity" min="1" value={formData.quantity} onChange={handleInputChange} style={inputStyle} required />
@@ -237,40 +138,36 @@ function AddTransaction({ setResult }) {
               </div>
             </div>
 
-            {/* Row 3: Shipping, Fees */}
-            <div style={rowStyle}>
-              <div style={{ flex: 1, minWidth: "140px" }}>
-                <label style={labelStyle}>Shipping (₹)</label>
-                <input type="number" step="0.01" name="shipping" placeholder="0.00" value={formData.shipping} onChange={handleInputChange} style={inputStyle} />
-              </div>
-              <div style={{ flex: 1, minWidth: "140px" }}>
-                <label style={labelStyle}>Additional Fees (₹)</label>
-                <input type="number" step="0.01" name="fees" placeholder="0.00" value={formData.fees} onChange={handleInputChange} style={inputStyle} />
-              </div>
-            </div>
-
             <button 
               type="submit" 
-              style={buttonStyle}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => { setIsHovered(false); setIsActive(false); }}
-              onMouseDown={() => setIsActive(true)}
-              onMouseUp={() => setIsActive(false)}
+              disabled={loading}
+              style={{
+                background: theme.accent,
+                color: "#ffffff",
+                padding: "14px",
+                width: "100%",
+                border: "none",
+                borderRadius: "8px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontWeight: "600",
+                marginTop: "16px",
+                fontSize: "15px",
+                opacity: loading ? 0.7 : 1,
+                transition: "all 0.2s ease"
+              }}
             >
-              Log Transaction
+              {loading ? "Processing..." : "Log Transaction"}
             </button>
           </form>
         </div>
 
-        {/* 🔹 2. BULK UPLOAD (Below Manual Entry) */}
+        {/* Bulk Upload Component */}
         <div style={cardStyle}>
-          <h2 style={sectionTitle}>Bulk Upload</h2>
-          <p style={sectionDesc}>
-            Upload a CSV or Excel file to import multiple transactions at once. Ensure your file headers match the required data fields (Product, Type, Quantity, Cost, etc.).
+          <h2 style={{ marginTop: 0, marginBottom: "8px", fontSize: "20px" }}>Bulk Upload</h2>
+          <p style={{ fontSize: "14px", color: theme.textMuted, marginBottom: "24px" }}>
+            Upload a CSV file to import multiple transactions at once.
           </p>
-          <div style={{ padding: "10px 0" }}>
-            <UploadForm setResult={setResult} />
-          </div>
+          <UploadForm setResult={setResult} />
         </div>
 
       </div>

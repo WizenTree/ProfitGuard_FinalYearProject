@@ -1,17 +1,17 @@
-// src/components/Layout.jsx
-import { theme } from "../styles/theme";
+import React from "react";
+import { useTheme } from "../context/ThemeContext";
+import ThemeSwitcher from "./ThemeSwitcher";
 
-// Add onClick and active props to SidebarItem
-const SidebarItem = ({ icon, label, active, onClick }) => (
+const SidebarItem = ({ icon, label, active, onClick, theme }) => (
   <div 
-    onClick={() => onClick(label)} // Trigger the page change
+    onClick={() => onClick(label)}
     style={{
       display: "flex",
       alignItems: "center",
       gap: "12px",
       padding: "12px 20px",
-      color: active ? theme.accent : theme.muted,
-      background: active ? "rgba(234, 179, 8, 0.1)" : "transparent",
+      color: active ? theme.accent : theme.sidebarText,
+      background: active ? theme.sidebarActive : "transparent",
       cursor: "pointer",
       borderRadius: "8px",
       margin: "4px 12px",
@@ -24,58 +24,48 @@ const SidebarItem = ({ icon, label, active, onClick }) => (
 );
 
 function Layout({ children, activePage, setActivePage }) {
+  const { theme } = useTheme(); // Consuming our global theme
+
   return (
-    <div style={{ display: "flex", background: theme.bg, minHeight: "100vh", color: "white" }}>
+    <div style={{ display: "flex", background: theme.bg, minHeight: "100vh", color: theme.text, transition: "background 0.3s ease" }}>
+      
       {/* Sidebar */}
-      <aside style={{ width: "260px", background: theme.sidebar, borderRight: `1px solid ${theme.border}` }}>
+      <aside style={{ width: "260px", background: theme.sidebar, borderRight: `1px solid ${theme.border}`, transition: "background 0.3s ease" }}>
         <div style={{ padding: "30px 20px" }}>
-          <h2 style={{ color: theme.accent, display: "flex", alignItems: "center", gap: "10px" }}>
-             Profit Guard
-          </h2>
+          <h2 style={{ color: theme.sidebarText, margin: 0 }}>Profit Guard</h2>
         </div>
         
-        {/* Pass active state and click handler to each item */}
-        <SidebarItem 
-          label="Dashboard" 
-          active={activePage === "Dashboard"} 
-          onClick={setActivePage} 
-        />
-        <SidebarItem 
-          label="Add Transaction" 
-          active={activePage === "Add Transaction"} 
-          onClick={setActivePage} 
-        />
-        <SidebarItem 
-          label="Transactions History" 
-          active={activePage === "Transactions History"} 
-          onClick={setActivePage} 
-        />
-        <SidebarItem 
-          label="Inventory" 
-          active={activePage === "Inventory"} 
-          onClick={setActivePage} 
-        />
-        <SidebarItem 
-          label="Products" 
-          active={activePage === "Products"} 
-          onClick={setActivePage} 
-        />
+        {["Dashboard", "Add Transaction", "Transactions History", "Inventory", "Products"].map((page) => (
+          <SidebarItem 
+            key={page}
+            label={page} 
+            active={activePage === page} 
+            onClick={setActivePage} 
+            theme={theme}
+          />
+        ))}
       </aside>
 
       {/* Main Content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <header style={{ 
           height: "70px", 
+          background: theme.cardBg,
           borderBottom: `1px solid ${theme.border}`, 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "space-between",
-          padding: "0 30px" 
+          padding: "0 30px",
+          transition: "background 0.3s ease"
         }}>
           <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>{activePage}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            <span style={{ color: theme.muted }}>User</span>
-            <div style={{ width: "35px", height: "35px", borderRadius: "50%", background: theme.accent }}></div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <ThemeSwitcher /> {/* Modularity in action */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ color: theme.textMuted, fontWeight: "500" }}>Admin</span>
+              <div style={{ width: "35px", height: "35px", borderRadius: "50%", background: theme.accent }}></div>
+            </div>
           </div>
         </header>
 
