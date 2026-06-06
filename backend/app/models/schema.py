@@ -1,7 +1,6 @@
-from pydantic import BaseModel
-from typing import List, Optional, Literal
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from datetime import datetime
-
 
 # =========================
 # 🔹 AI / OCR MODELS
@@ -33,15 +32,16 @@ class AnalysisResponse(BaseModel):
 # =========================
 
 class TransactionRequest(BaseModel):
-    product: str
-    type: Literal["purchase", "sale"]
-    quantity: int
-
-    selling_price: float = 0
-    cost_price: float = 0
-
-    shipping: float = 0
-    fees: float = 0
+    # Security: Field constraints prevent empty strings, negative numbers, and invalid types
+    product: str = Field(..., min_length=1, max_length=100, description="Product name")
+    type: str = Field(..., pattern="^(sale|purchase)$", description="Must be sale or purchase")
+    quantity: int = Field(..., gt=0, description="Quantity must be at least 1")
+    
+    selling_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    cost_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    shipping: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    fees: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    date: Optional[str] = None
 
 
 class TransactionResponse(BaseModel):
@@ -49,18 +49,10 @@ class TransactionResponse(BaseModel):
     display_name: str
     type: str
     quantity: int
-
-    selling_price: float
-    cost_price: float
-    shipping: float
-    fees: float
-
     total_revenue: float
     total_cost: float
     profit: float
-
     created_at: datetime
-
 
 class TransactionItem(BaseModel):
     product: str
