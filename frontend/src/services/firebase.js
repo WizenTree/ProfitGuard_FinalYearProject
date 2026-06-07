@@ -4,9 +4,9 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  sendSignInLinkToEmail, 
-  isSignInWithEmailLink, 
-  signInWithEmailLink 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -24,7 +24,7 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export { 
   signInWithPopup, 
-  sendSignInLinkToEmail, 
-  isSignInWithEmailLink, 
-  signInWithEmailLink 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 };

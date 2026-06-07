@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 
 # =========================
-# 🔹 AI / OCR MODELS
+# 🤖 AI / OCR MODELS
 # =========================
 
 class ParsedData(BaseModel):
@@ -11,11 +11,9 @@ class ParsedData(BaseModel):
     cost_price: Optional[float] = None
     selling_price: Optional[float] = None
 
-
 class ProfitData(BaseModel):
     profit: Optional[float] = None
     margin: Optional[float] = None
-
 
 class AnalysisResponse(BaseModel):
     file_name: Optional[str] = None
@@ -28,7 +26,7 @@ class AnalysisResponse(BaseModel):
 
 
 # =========================
-# 🔹 TRANSACTION MODELS
+# 💰 TRANSACTION MODELS
 # =========================
 
 class TransactionRequest(BaseModel):
@@ -71,13 +69,12 @@ class TransactionItem(BaseModel):
 
     created_at: datetime
 
-
 class TransactionsResponse(BaseModel):
     items: List[TransactionItem]
 
 
 # =========================
-# 🔹 INVENTORY MODELS
+# 📦 INVENTORY MODELS
 # =========================
 
 class InventoryItem(BaseModel):
@@ -87,28 +84,34 @@ class InventoryItem(BaseModel):
     avg_cost: float
     updated_at: Optional[datetime]
 
-
 class InventoryResponse(BaseModel):
     items: List[InventoryItem]
 
 
 # =========================
-# 🔹 REPORTS MODELS
+# 📊 REPORTS MODELS
 # =========================
 
 class TopProduct(BaseModel):
     product: str
     total_quantity: int
 
+class GrowthData(BaseModel):
+    date: str
+    revenue: float
+    cost: float
+    profit: float
 
 class ReportsResponse(BaseModel):
     total_profit: float
     total_revenue: float
     total_cost: float
     top_products: List[TopProduct]
+    growth_data: List[GrowthData] = []
+
 
 # =========================
-# 🔹 USER & AUTH MODELS
+# 👤 USER & AUTH MODELS
 # =========================
 
 class User(BaseModel):
@@ -121,34 +124,3 @@ class UserResponse(BaseModel):
     uid: str
     email: str
     role: str
-
-# =========================
-# Update Transaction Request
-# =========================
-class TransactionRequest(BaseModel):
-    # Security tracking: Which user does this belong to?
-    user_id: str = Field(..., description="The Firebase UID of the user making the transaction")
-    
-    product: str = Field(..., min_length=1, max_length=100, description="Product name")
-    type: str = Field(..., pattern="^(sale|purchase)$", description="Must be sale or purchase")
-    quantity: int = Field(..., gt=0, description="Quantity must be at least 1")
-    
-    selling_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
-    cost_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
-    shipping: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
-    fees: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
-    date: Optional[str] = None
-
-class GrowthData(BaseModel):
-    date: str
-    revenue: float
-    cost: float
-    profit: float
-
-# Update your existing ReportsResponse to include the growth_data field
-class ReportsResponse(BaseModel):
-    total_profit: float
-    total_revenue: float
-    total_cost: float
-    top_products: List[TopProduct]
-    growth_data: List[GrowthData] = []

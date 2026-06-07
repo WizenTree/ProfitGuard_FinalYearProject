@@ -18,6 +18,20 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
     product_sales = {}
     growth_dict = {}
 
+    # --- UX IMPROVEMENT: Timeline Zero-Padding ---
+    # Guarantee the chart always has a baseline to draw from
+    current_year = datetime.utcnow().year
+    
+    if period == "year":
+        # Add the last 3 years to ensure the line starts at the bottom
+        for y in range(current_year - 3, current_year + 1):
+            growth_dict[str(y)] = {"revenue": 0, "cost": 0, "profit": 0}
+    elif period == "month":
+        # Add all 12 months of the current year
+        for m in range(1, 13):
+            growth_dict[f"{current_year}-{m:02d}"] = {"revenue": 0, "cost": 0, "profit": 0}
+
+    # --- PROCESS TRANSACTIONS ---
     for txn in transactions.find({"user_id": uid}):
         txn_type = txn.get("type")
         revenue = txn.get("total_revenue", 0)
@@ -35,12 +49,13 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
                 if period == "day":
                     key = date_val.strftime("%Y-%m-%d")
                 elif period == "week":
-                    key = date_val.strftime("%Y-W%W") # e.g., 2026-W23
+                    key = date_val.strftime("%Y-W%W") 
                 elif period == "year":
                     key = date_val.strftime("%Y")
-                else: # default to month
+                else: 
                     key = date_val.strftime("%Y-%m")
                 
+                # Dynamically add missing dates if they fall outside our padding
                 if key not in growth_dict:
                     growth_dict[key] = {"revenue": 0, "cost": 0, "profit": 0}
                 
@@ -50,7 +65,6 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
                 elif txn_type == "purchase":
                     growth_dict[key]["cost"] += cost
 
-        # SALES TOTALS
         if txn_type == "sale":
             total_revenue += revenue
             total_profit += profit
@@ -58,7 +72,6 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
             quantity = txn.get("quantity", 0)
             product_sales[name] = product_sales.get(name, 0) + quantity
 
-        # PURCHASES TOTALS
         elif txn_type == "purchase":
             total_cost += cost
 
@@ -66,7 +79,7 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
     sorted_products = sorted(product_sales.items(), key=lambda x: x[1], reverse=True)
     top_products = [TopProduct(product=name, total_quantity=qty) for name, qty in sorted_products[:5]]
 
-    # Sort timeline chronologically (YYYY-MM-DD strings sort naturally)
+    # Sort timeline chronologically
     sorted_growth_keys = sorted(growth_dict.keys())
     growth_data = [
         GrowthData(

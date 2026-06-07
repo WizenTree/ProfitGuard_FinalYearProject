@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import SummaryCard from "../components/SummaryCard";
 import ChartSection from "../components/ChartSection";
-import GrowthChart from "../components/GrowthChart"; // NEW IMPORT
+import GrowthChart from "../components/GrowthChart"; 
 import { getReports } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
@@ -10,25 +10,47 @@ function Dashboard() {
   const { theme } = useTheme();
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState("month"); // NEW STATE
+  const [period, setPeriod] = useState("month");
 
   useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const data = await getReports(period); 
+        setReports(data);
+      } catch (err) {
+        console.error("Failed to load reports", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchReports();
-  }, [period]); // Trigger refresh when period changes
+  }, [period]);
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
-      const data = await getReports(period); // Pass period to API
-      setReports(data);
-    } catch (err) {
-      console.error("Failed to load reports", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // UX Polish: Professional Skeleton Loader
+  if (loading && !reports) return (
+    <div style={{ padding: "40px", maxWidth: "1400px", margin: "0 auto", animation: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}>
+      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      
+      {/* Header Skeleton */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
+        <div style={{ width: "300px", height: "40px", background: theme.cardBg, borderRadius: "8px" }}></div>
+        <div style={{ width: "200px", height: "40px", background: theme.cardBg, borderRadius: "20px" }}></div>
+      </div>
+      
+      {/* Cards Skeleton */}
+      <div style={{ display: "flex", gap: "24px", marginBottom: "32px", flexWrap: "wrap" }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ flex: 1, minWidth: "250px", height: "140px", background: theme.cardBg, borderRadius: "16px", border: `1px solid ${theme.border}` }}></div>
+        ))}
+      </div>
+      
+      {/* Chart Skeleton */}
+      <div style={{ height: "380px", background: theme.cardBg, borderRadius: "12px", border: `1px solid ${theme.border}` }}></div>
+    </div>
+  );
 
-  if (loading && !reports) return <div style={{ padding: "40px", color: theme.text, textAlign: "center" }}>Fetching your financial data...</div>;
   if (!reports) return <div style={{ padding: "40px", color: theme.text, textAlign: "center" }}>No Data Available. Please add some transactions.</div>;
 
   const chartData = [
@@ -48,9 +70,8 @@ function Dashboard() {
   const marginText = reports.total_revenue > 0 ? `${profitMargin}% ${isProfitable ? 'Margin' : 'Loss'}` : "0% Margin";
 
   return (
-    <div style={{ padding: "40px", color: theme.text, maxWidth: "1400px", margin: "0 auto", transition: "all 0.3s ease" }}>
+    <div style={{ padding: "40px", color: theme.text, maxWidth: "1400px", margin: "0 auto", transition: "opacity 0.4s ease-in" }}>
       
-      {/* Header section */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
         <div>
           <h1 style={{ margin: "0 0 8px 0", fontSize: "28px" }}>Dashboard Overview</h1>
@@ -58,8 +79,7 @@ function Dashboard() {
         </div>
         
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          {/* New Time Filter Dropdown */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", background: theme.cardBg, padding: "6px 12px", borderRadius: "8px", border: `1px solid ${theme.border}` }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", background: theme.cardBg, padding: "6px 12px", borderRadius: "8px", border: `1px solid ${theme.border}`, boxShadow: theme.shadow }}>
             <label style={{ color: theme.textMuted, fontSize: "14px", fontWeight: "600" }}>Timeline:</label>
             <select 
               value={period} 
@@ -90,7 +110,6 @@ function Dashboard() {
         <SummaryCard title={profitTitle} value={Math.abs(reports.total_profit)} icon={profitIcon} subtext={marginText} color={profitColor} />
       </div>
 
-      {/* New Growth Chart placed prominently across the width */}
       {reports.growth_data && reports.growth_data.length > 0 && (
         <GrowthChart data={reports.growth_data} theme={theme} />
       )}
@@ -110,7 +129,7 @@ function Dashboard() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {reports.top_products.map((item, index) => (
-                  <div key={index} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: theme.bg, borderRadius: "8px", border: `1px solid ${theme.border}`, transition: "transform 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.transform = "translateX(4px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateX(0)"}>
+                  <div key={index} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: theme.bg, borderRadius: "8px", border: `1px solid ${theme.border}`, transition: "transform 0.2s ease", cursor: "default" }} onMouseOver={(e) => e.currentTarget.style.transform = "translateX(4px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateX(0)"}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: theme.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold" }}>{index + 1}</div>
                       <span style={{ fontWeight: "600", fontSize: "15px" }}>{item.product}</span>

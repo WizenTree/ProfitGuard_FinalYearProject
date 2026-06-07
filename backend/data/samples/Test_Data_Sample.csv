@@ -1,0 +1,15 @@
+product,type,date,quantity,cost_price,selling_price,shipping,fees
+Kiroshi Optics Mk.1,purchase,10-04-2026,50,150,0,25,5
+Mantis Blades,purchase,15-04-2026,20,450,0,40,10
+Kiroshi Optics Mk.1,sale,20-04-2026,5,0,299,10,2
+Mantis Blades,sale,02-05-2026,3,0,899,15,5
+Militech Sandevistan,purchase,10-05-2026,10,1200,0,50,20
+Arasaka Cyberdeck,purchase,18-05-2026,30,300,0,30,10
+Militech Sandevistan,sale,22-05-2026,2,0,2400,20,10
+Arasaka Cyberdeck,sale,25-05-2026,8,0,550,12,4
+Kiroshi Optics Mk.1,sale,01-06-2026,12,0,299,15,3
+Optical Camo System,purchase,05-06-2026,15,800,0,35,15
+Optical Camo System,sale,10-06-2026,4,0,1450,18,6
+Mantis Blades,sale,15-06-2026,4,0,850,15,5
+Militech Sandevistan,sale,20-06-2026,1,0,2500,25,10
+Arasaka Cyberdeck,sale,28-06-2026,5,0,550,12,4
