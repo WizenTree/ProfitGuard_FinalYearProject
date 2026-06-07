@@ -7,8 +7,6 @@ if not settings.MONGO_URL:
 
 # Create client
 client = MongoClient(settings.MONGO_URL)
-
-# Use dynamic database name
 db = client[settings.MONGO_DB_NAME]
 
 # =========================
@@ -16,9 +14,21 @@ db = client[settings.MONGO_DB_NAME]
 # =========================
 products = db["products"]
 transactions = db["transactions"]
-users = db["users"]  # Added a Users collection!
+users = db["users"]
 
-# Optional: indexes for performance
-products.create_index("name", unique=True)
+# =========================
+# INDEXES & MIGRATIONS
+# =========================
+# 1. Drop the old global uniqueness rule if it exists
+try:
+    products.drop_index("name_1")
+except:
+    pass # It's okay if it doesn't exist anymore
+
+# 2. Create the new Multi-User compound index
+# This ensures a user can't have two products with the exact same name, 
+# but two DIFFERENT users can both have a "Wireless Mouse".
+products.create_index([("user_id", 1), ("name", 1)], unique=True)
+
 transactions.create_index("created_at")
-users.create_index("uid", unique=True) # Ensure User IDs are unique
+users.create_index("uid", unique=True)
