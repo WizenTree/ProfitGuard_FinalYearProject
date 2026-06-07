@@ -1,19 +1,24 @@
-from fastapi import APIRouter
+# backend/app/routes/reports.py
+from fastapi import APIRouter, Depends
 from app.models.database import transactions
 from app.models.schema import ReportsResponse, TopProduct
+from app.core.auth import get_current_user # 1. Import auth dependency
 
 router = APIRouter()
 
 @router.get("/", response_model=ReportsResponse)
-async def get_reports():
+async def get_reports(user_data: dict = Depends(get_current_user)): # 2. Require token
+    # 3. Extract the user's ID
+    uid = user_data.get("uid")
 
     total_profit = 0
     total_revenue = 0
-    total_cost = 0  # ONLY purchases
+    total_cost = 0  
 
     product_sales = {}
 
-    for txn in transactions.find():
+    # 4. ONLY search for transactions that match this user's ID
+    for txn in transactions.find({"user_id": uid}):
 
         txn_type = txn.get("type")
 

@@ -1,6 +1,9 @@
-import React from "react";
+// src/components/Layout.jsx
+import React, { useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext"; // Import Auth context
 import ThemeSwitcher from "./ThemeSwitcher";
+import LoginModal from "./LoginModal";
 
 const SidebarItem = ({ icon, label, active, onClick, theme }) => (
   <div 
@@ -24,7 +27,9 @@ const SidebarItem = ({ icon, label, active, onClick, theme }) => (
 );
 
 function Layout({ children, activePage, setActivePage }) {
-  const { theme } = useTheme(); // Consuming our global theme
+  const { theme } = useTheme(); 
+  const { currentUser, logout } = useAuth(); // Get user state
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   return (
     <div style={{ display: "flex", background: theme.bg, minHeight: "100vh", color: theme.text, transition: "background 0.3s ease" }}>
@@ -61,11 +66,48 @@ function Layout({ children, activePage, setActivePage }) {
           <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>{activePage}</div>
           
           <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            <ThemeSwitcher /> {/* Modularity in action */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ color: theme.textMuted, fontWeight: "500" }}>Admin</span>
-              <div style={{ width: "35px", height: "35px", borderRadius: "50%", background: theme.accent }}></div>
-            </div>
+            <ThemeSwitcher />
+            
+            {currentUser ? (
+              // SHOW THIS IF LOGGED IN
+              <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ color: theme.text, fontWeight: "500" }}>
+                    {currentUser.displayName || currentUser.email.split('@')[0]}
+                  </span>
+                  <img 
+                    src={currentUser.photoURL || "https://via.placeholder.com/35"} 
+                    alt="profile" 
+                    style={{ width: "35px", height: "35px", borderRadius: "50%", border: `2px solid ${theme.accent}` }}
+                  />
+                </div>
+                <button 
+                  onClick={logout}
+                  style={{
+                    background: "transparent", color: theme.red || "#ef4444", 
+                    border: `1px solid ${theme.red || "#ef4444"}`, borderRadius: "8px",
+                    padding: "6px 12px", cursor: "pointer", fontWeight: "600"
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              // SHOW THIS IF NOT LOGGED IN
+              <div 
+                onClick={() => setIsLoginOpen(true)}
+                style={{ 
+                  display: "flex", alignItems: "center", gap: "10px",
+                  cursor: "pointer", padding: "6px 12px", borderRadius: "24px",
+                  transition: "background 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = theme.border}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <span style={{ color: theme.textMuted, fontWeight: "500" }}>Admin Login</span>
+                <div style={{ width: "35px", height: "35px", borderRadius: "50%", background: theme.accent }}></div>
+              </div>
+            )}
           </div>
         </header>
 
@@ -73,6 +115,9 @@ function Layout({ children, activePage, setActivePage }) {
           {children}
         </main>
       </div>
+
+      {/* Render the Login Modal */}
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 }

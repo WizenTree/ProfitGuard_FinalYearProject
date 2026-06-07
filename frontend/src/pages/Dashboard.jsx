@@ -24,8 +24,8 @@ function Dashboard() {
     }
   };
 
-  if (loading) return <h2 style={{ padding: "20px" }}>Loading...</h2>;
-  if (!reports) return <h2 style={{ padding: "20px" }}>No Data</h2>;
+  if (loading) return <h2 style={{ padding: "20px", color: theme.text }}>Loading...</h2>;
+  if (!reports) return <h2 style={{ padding: "20px", color: theme.text }}>No Data</h2>;
 
   const chartData = [
     { name: "Revenue", value: reports.total_revenue },
@@ -34,16 +34,18 @@ function Dashboard() {
   ];
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div style={{ padding: "30px", color: theme.text }}>
       <h1 style={{ marginTop: 0 }}>Dashboard Overview</h1>
 
       <div style={{ display: "flex", gap: "20px", marginTop: "20px", flexWrap: "wrap" }}>
+        {/* Using theme.accent for consistency */}
         <SummaryCard title="Total Profit" value={reports.total_profit} color={theme.accent} />
-        <SummaryCard title="Total Revenue" value={reports.total_revenue} color="#3b82f6" />
-        <SummaryCard title="Total Cost" value={reports.total_cost} color="#ef4444" />
+        {/* Using theme values instead of hardcoded colors */}
+        <SummaryCard title="Total Revenue" value={reports.total_revenue} color={theme.accent} /> 
+        <SummaryCard title="Total Cost" value={reports.total_cost} color={theme.textMuted} />
       </div>
 
-      <ChartSection data={chartData} />
+      <ChartSection data={chartData} theme={theme} />
 
       <div style={{
         background: theme.cardBg,

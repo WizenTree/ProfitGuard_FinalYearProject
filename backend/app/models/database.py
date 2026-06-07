@@ -1,28 +1,24 @@
-import os
+# backend/app/models/database.py
 from pymongo import MongoClient
-from dotenv import load_dotenv
+from app.core.config import settings
 
-load_dotenv()
-
-MONGO_URL = os.getenv("MONGO_URL")
-
-if not MONGO_URL:
+if not settings.MONGO_URL:
     raise Exception("MONGO_URL not found in .env file")
 
-#Create client
-client = MongoClient(MONGO_URL)
+# Create client
+client = MongoClient(settings.MONGO_URL)
 
-#Database
-db = client["profit_guard_db"]
+# Use dynamic database name
+db = client[settings.MONGO_DB_NAME]
 
 # =========================
 # COLLECTIONS
 # =========================
-
 products = db["products"]
 transactions = db["transactions"]
-analyses = db["analyses"]  # optional (can remove if OCR removed)
+users = db["users"]  # Added a Users collection!
 
 # Optional: indexes for performance
 products.create_index("name", unique=True)
 transactions.create_index("created_at")
+users.create_index("uid", unique=True) # Ensure User IDs are unique

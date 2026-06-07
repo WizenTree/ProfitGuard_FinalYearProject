@@ -106,3 +106,35 @@ class ReportsResponse(BaseModel):
     total_revenue: float
     total_cost: float
     top_products: List[TopProduct]
+
+# =========================
+# 🔹 USER & AUTH MODELS
+# =========================
+
+class User(BaseModel):
+    uid: str = Field(..., description="Firebase UID")
+    email: str
+    role: str = Field(default="user", pattern="^(admin|user|manager)$")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserResponse(BaseModel):
+    uid: str
+    email: str
+    role: str
+
+# =========================
+# Update Transaction Request
+# =========================
+class TransactionRequest(BaseModel):
+    # Security tracking: Which user does this belong to?
+    user_id: str = Field(..., description="The Firebase UID of the user making the transaction")
+    
+    product: str = Field(..., min_length=1, max_length=100, description="Product name")
+    type: str = Field(..., pattern="^(sale|purchase)$", description="Must be sale or purchase")
+    quantity: int = Field(..., gt=0, description="Quantity must be at least 1")
+    
+    selling_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    cost_price: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    shipping: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    fees: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
+    date: Optional[str] = None
