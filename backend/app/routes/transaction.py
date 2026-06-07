@@ -1,8 +1,9 @@
 # backend/app/routes/transaction.py
 from fastapi import APIRouter, Depends, HTTPException
-from app.models.database import transactions
+from app.models.database import transactions, products
 from app.models.schema import TransactionRequest
 from app.core.auth import get_current_user
+from app.utils.helpers import normalize_product_name, format_display_name
 from datetime import datetime
 
 router = APIRouter()
@@ -10,23 +11,68 @@ router = APIRouter()
 @router.post("/")
 def create_transaction(
     transaction_data: TransactionRequest, 
-    user_data: dict = Depends(get_current_user) # 1. Require auth token
+    user_data: dict = Depends(get_current_user)
 ):
-    """
-    Creates a new transaction and ties it to the logged-in user.
-    """
-    # 2. Extract the user's ID
     uid = user_data.get("uid")
 
-    # 3. Calculate profit and totals
+    # Fixed Math: Aligning with bulk_upload.py (shipping and fees applied once per order)
     total_revenue = transaction_data.selling_price * transaction_data.quantity
-    total_cost = (transaction_data.cost_price + transaction_data.shipping + transaction_data.fees) * transaction_data.quantity
-    profit = total_revenue - total_cost
+    total_cost = (transaction_data.cost_price * transaction_data.quantity) + transaction_data.shipping + transaction_data.fees
+    profit = total_revenue - total_cost if transaction_data.type == "sale" else 0
 
-    # 4. Prepare the document to insert into MongoDB
+    normalized_name = normalize_product_name(transaction_data.product)
+    display_name = format_display_name(transaction_data.product)
+    created_at = datetime.utcnow()
+
+    # --- INVENTORY SYNC LOGIC ---
+    product = products.find_one({"name": normalized_name, "user_id": uid})
+
+    if transaction_data.type == "purchase":
+        if product:
+            new_stock = product["stock"] + transaction_data.quantity
+            total_existing_cost = product["avg_cost"] * product["stock"]
+            total_new_cost = total_cost
+            avg_cost = (total_existing_cost + total_new_cost) / new_stock if new_stock > 0 else 0
+
+            products.update_one(
+                {"name": normalized_name, "user_id": uid},
+                {"$set": {"stock": new_stock, "avg_cost": avg_cost, "updated_at": created_at}}
+            )
+        else:
+            products.insert_one({
+                "user_id": uid, 
+                "name": normalized_name,
+                "display_name": display_name,
+                "stock": transaction_data.quantity,
+                "avg_cost": transaction_data.cost_price,
+                "created_at": created_at,
+                "updated_at": created_at
+            })
+
+    elif transaction_data.type == "sale":
+        if not product:
+            # Auto-create product with negative stock if selling a missing item
+            products.insert_one({
+                "user_id": uid,
+                "name": normalized_name,
+                "display_name": display_name,
+                "stock": -transaction_data.quantity, 
+                "avg_cost": transaction_data.cost_price,
+                "created_at": created_at,
+                "updated_at": created_at
+            })
+        else:
+            new_stock = product["stock"] - transaction_data.quantity
+            products.update_one(
+                {"name": normalized_name, "user_id": uid},
+                {"$set": {"stock": new_stock, "updated_at": created_at}}
+            )
+
+    # --- SAVE TRANSACTION ---
     new_tx = {
-        "user_id": uid, # THIS IS THE MAGIC LINE! It ties the data to YOU.
-        "product": transaction_data.product,
+        "user_id": uid,
+        "product": normalized_name,
+        "display_name": display_name,
         "type": transaction_data.type,
         "quantity": transaction_data.quantity,
         "selling_price": transaction_data.selling_price,
@@ -36,10 +82,9 @@ def create_transaction(
         "total_revenue": total_revenue,
         "total_cost": total_cost,
         "profit": profit,
-        "created_at": datetime.utcnow()
+        "created_at": created_at
     }
 
-    # Insert into database
     result = transactions.insert_one(new_tx)
 
     if result.inserted_id:

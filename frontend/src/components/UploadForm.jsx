@@ -1,6 +1,9 @@
+// frontend/src/components/UploadForm.jsx
 import React, { useState, useRef } from "react";
 import { uploadFile } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function UploadForm({ setResult }) {
   const { theme } = useTheme();
@@ -14,7 +17,7 @@ function UploadForm({ setResult }) {
 
   const handleUpload = async () => {
     if (!file) {
-      alert("Please select a file to upload.");
+      toast.warn("Please select a file to upload.");
       return;
     }
 
@@ -22,13 +25,13 @@ function UploadForm({ setResult }) {
       setLoading(true);
       const data = await uploadFile(file);
       if (setResult) setResult(data);
-      alert("✅ Bulk upload completed");
+      toast.success("✅ Bulk upload completed successfully");
       
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       console.error(err);
-      alert("❌ Upload failed");
+      toast.error(err.response?.data?.detail || "❌ Upload failed. Please check your file.");
     } finally {
       setLoading(false);
     }
@@ -71,6 +74,9 @@ function UploadForm({ setResult }) {
       >
         {loading ? "Uploading..." : "Upload CSV"}
       </button>
+
+      {/* Global Toast Container to render the beautiful popups */}
+      <ToastContainer position="bottom-right" theme="colored" />
     </div>
   );
 }
