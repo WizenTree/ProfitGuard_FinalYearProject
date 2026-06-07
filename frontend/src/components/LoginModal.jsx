@@ -1,28 +1,73 @@
 // src/components/LoginModal.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword } from "../services/firebase";
+import { 
+  auth, 
+  googleProvider, 
+  signInWithPopup, 
+  sendSignInLinkToEmail, 
+  isSignInWithEmailLink, 
+  signInWithEmailLink 
+} from "../services/firebase";
 
 function LoginModal({ isOpen, onClose }) {
   const { theme } = useTheme();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Added loading state to prevent double-clicks
+  const [message, setMessage] = useState(""); // New success message state
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Intercept the URL to check if the user clicked the OTP link from their email
+  useEffect(() => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let savedEmail = window.localStorage.getItem("emailForSignIn");
+      
+      // If opened on a different device/browser, prompt for email verification
+      if (!savedEmail) {
+        savedEmail = window.prompt("Please provide your email for confirmation");
+      }
+      
+      if (savedEmail) {
+        setIsLoading(true);
+        signInWithEmailLink(auth, savedEmail, window.location.href)
+          .then((result) => {
+            window.localStorage.removeItem("emailForSignIn");
+            // Clean up the URL parameters
+            window.history.replaceState(null, "", window.location.pathname);
+            if (onClose) onClose();
+          })
+          .catch((err) => {
+            setError("Verification link expired or is invalid. Please try again.");
+            console.error(err);
+          })
+          .finally(() => setIsLoading(false));
+      }
+    }
+  }, [onClose]);
 
   if (!isOpen) return null;
 
-  const handleEmailLogin = async (e) => {
+  // Send the verification link
+  const handleEmailOTP = async (e) => {
     e.preventDefault();
     if (isLoading) return; 
     
     setError("");
+    setMessage("");
     setIsLoading(true);
+
+    const actionCodeSettings = {
+      // The URL to redirect back to. Ensure your domain is whitelisted in Firebase.
+      url: window.location.href, 
+      handleCodeInApp: true,
+    };
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onClose(); 
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem("emailForSignIn", email);
+      setMessage("Verification link sent! Check your email inbox to log in.");
     } catch (err) {
-      setError("Failed to log in. Check your credentials.");
+      setError("Failed to send verification link. Check your email format.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -30,10 +75,11 @@ function LoginModal({ isOpen, onClose }) {
   };
 
   const handleGoogleLogin = async (e) => {
-    e.preventDefault(); // Prevent default behavior
+    e.preventDefault(); 
     if (isLoading) return; 
     
     setError("");
+    setMessage("");
     setIsLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -87,13 +133,23 @@ function LoginModal({ isOpen, onClose }) {
           </div>
         )}
 
-        <form onSubmit={handleEmailLogin} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {message && (
+          <div style={{ 
+            background: "rgba(16, 185, 129, 0.1)", color: "#059669", 
+            padding: "10px", borderRadius: "8px", marginBottom: "16px",
+            fontSize: "14px", textAlign: "center", border: "1px solid rgba(16, 185, 129, 0.3)"
+          }}>
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleEmailOTP} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <input 
             type="email" 
             placeholder="Email Address" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || message} // Disable if message is sent
             style={{
               padding: "12px", borderRadius: "8px", border: `1px solid ${theme.border}`,
               background: theme.bg, color: theme.text, outline: "none",
@@ -101,26 +157,13 @@ function LoginModal({ isOpen, onClose }) {
             }}
             required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            style={{
-              padding: "12px", borderRadius: "8px", border: `1px solid ${theme.border}`,
-              background: theme.bg, color: theme.text, outline: "none",
-              opacity: isLoading ? 0.6 : 1
-            }}
-            required
-          />
-          <button type="submit" disabled={isLoading} style={{
+          <button type="submit" disabled={isLoading || message} style={{
             background: theme.accent, color: "#fff", padding: "12px",
-            borderRadius: "8px", border: "none", cursor: isLoading ? "wait" : "pointer", 
+            borderRadius: "8px", border: "none", cursor: (isLoading || message) ? "not-allowed" : "pointer", 
             fontWeight: "600", fontSize: "16px", marginTop: "8px",
-            opacity: isLoading ? 0.7 : 1
+            opacity: (isLoading || message) ? 0.7 : 1
           }}>
-            {isLoading ? "Loading..." : "Login with Email"}
+            {isLoading ? "Processing..." : message ? "Link Sent" : "Send Verification Link"}
           </button>
         </form>
 
@@ -132,7 +175,6 @@ function LoginModal({ isOpen, onClose }) {
           <div style={{ flex: 1, height: "1px", background: theme.border }}></div>
         </div>
 
-        {/* VITAL FIX: type="button" added here */}
         <button 
           type="button" 
           onClick={handleGoogleLogin} 

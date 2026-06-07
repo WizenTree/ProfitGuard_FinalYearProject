@@ -60,7 +60,13 @@ export const deleteProduct = async (productName) => {
 };
 
 // REPORTS
-export const getReports = async () => {
-  const response = await apiClient.get(`/reports/`);
+export const getReports = async (period = "month") => {
+  const response = await apiClient.get(`/reports/?period=${period}`);
+  return response.data;
+};
+
+// Add this to the bottom of frontend/src/services/api.js
+export const deleteAllData = async () => {
+  const response = await apiClient.delete(`/transaction/all`);
   return response.data;
 };

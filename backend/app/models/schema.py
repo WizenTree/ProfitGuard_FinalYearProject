@@ -138,3 +138,17 @@ class TransactionRequest(BaseModel):
     shipping: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
     fees: float = Field(default=0.0, ge=0.0, description="Cannot be negative")
     date: Optional[str] = None
+
+class GrowthData(BaseModel):
+    date: str
+    revenue: float
+    cost: float
+    profit: float
+
+# Update your existing ReportsResponse to include the growth_data field
+class ReportsResponse(BaseModel):
+    total_profit: float
+    total_revenue: float
+    total_cost: float
+    top_products: List[TopProduct]
+    growth_data: List[GrowthData] = []

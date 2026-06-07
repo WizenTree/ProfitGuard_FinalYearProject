@@ -43,16 +43,23 @@ function UploadForm({ setResult }) {
         background: theme.bg, 
         border: `1px dashed ${theme.border}`, 
         borderRadius: "8px",
-        padding: "16px",
-        textAlign: "center"
+        padding: "20px 16px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px"
       }}>
         <input 
           ref={fileInputRef}
           type="file" 
-          accept=".csv"
+          // Updated to accept both CSV and Excel formats
+          accept=".csv, .xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
           onChange={handleFileChange} 
           style={{ color: theme.text, fontSize: "14px", width: "100%", cursor: "pointer", outline: "none" }}
         />
+        <span style={{ fontSize: "12px", color: theme.textMuted }}>
+          Supported formats: .csv, .xlsx
+        </span>
       </div>
 
       <button 
@@ -72,7 +79,7 @@ function UploadForm({ setResult }) {
           transition: "opacity 0.2s ease"
         }}
       >
-        {loading ? "Uploading..." : "Upload CSV"}
+        {loading ? "Uploading..." : "Upload File"}
       </button>
 
       {/* Global Toast Container to render the beautiful popups */}

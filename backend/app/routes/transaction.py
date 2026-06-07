@@ -15,7 +15,10 @@ def create_transaction(
 ):
     uid = user_data.get("uid")
 
-    # Fixed Math: Aligning with bulk_upload.py (shipping and fees applied once per order)
+    # Safety Check 1: Prevent negative or zero quantity
+    if transaction_data.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be greater than zero.")
+
     total_revenue = transaction_data.selling_price * transaction_data.quantity
     total_cost = (transaction_data.cost_price * transaction_data.quantity) + transaction_data.shipping + transaction_data.fees
     profit = total_revenue - total_cost if transaction_data.type == "sale" else 0
@@ -44,29 +47,26 @@ def create_transaction(
                 "name": normalized_name,
                 "display_name": display_name,
                 "stock": transaction_data.quantity,
-                "avg_cost": transaction_data.cost_price,
+                "avg_cost": transaction_data.cost_price, # Initial average cost is the unit cost price
                 "created_at": created_at,
                 "updated_at": created_at
             })
 
     elif transaction_data.type == "sale":
-        if not product:
-            # Auto-create product with negative stock if selling a missing item
-            products.insert_one({
-                "user_id": uid,
-                "name": normalized_name,
-                "display_name": display_name,
-                "stock": -transaction_data.quantity, 
-                "avg_cost": transaction_data.cost_price,
-                "created_at": created_at,
-                "updated_at": created_at
-            })
-        else:
-            new_stock = product["stock"] - transaction_data.quantity
-            products.update_one(
-                {"name": normalized_name, "user_id": uid},
-                {"$set": {"stock": new_stock, "updated_at": created_at}}
+        current_stock = product.get("stock", 0) if product else 0
+        
+        # Safety Check 2: Prevent negative stock
+        if current_stock < transaction_data.quantity:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Insufficient stock for '{display_name}'. Available: {current_stock}, Requested to sell: {transaction_data.quantity}"
             )
+
+        new_stock = current_stock - transaction_data.quantity
+        products.update_one(
+            {"name": normalized_name, "user_id": uid},
+            {"$set": {"stock": new_stock, "updated_at": created_at}}
+        )
 
     # --- SAVE TRANSACTION ---
     new_tx = {
@@ -91,3 +91,20 @@ def create_transaction(
         return {"message": "Transaction added successfully", "id": str(result.inserted_id)}
     
     raise HTTPException(status_code=500, detail="Failed to add transaction")
+
+# Add this at the bottom of backend/app/routes/transaction.py
+
+@router.delete("/all")
+def delete_all_user_data(user_data: dict = Depends(get_current_user)):
+    """Permanently delete all transactions and inventory for the authenticated user."""
+    uid = user_data.get("uid")
+    
+    # Securely delete only the data belonging to this uid
+    tx_result = transactions.delete_many({"user_id": uid})
+    prod_result = products.delete_many({"user_id": uid})
+    
+    return {
+        "message": "All user data successfully deleted",
+        "transactions_deleted": tx_result.deleted_count,
+        "products_deleted": prod_result.deleted_count
+    }

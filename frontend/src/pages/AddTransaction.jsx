@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import UploadForm from "../components/UploadForm";
-import { createTransaction } from "../services/api"; // Clean API call
+import { createTransaction, deleteAllData } from "../services/api"; 
 import { useTheme } from "../context/ThemeContext";
 
 function AddTransaction({ setResult }) {
@@ -18,6 +18,11 @@ function AddTransaction({ setResult }) {
   });
 
   const [loading, setLoading] = useState(false);
+  
+  // Danger Zone States
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,6 +60,23 @@ function AddTransaction({ setResult }) {
       alert("❌ Error: " + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (deleteInput !== "DELETE") return;
+    
+    try {
+      setIsDeleting(true);
+      await deleteAllData();
+      alert("✅ All transactions and inventory data have been permanently deleted.");
+      setShowDeleteConfirm(false);
+      setDeleteInput("");
+    } catch (error) {
+      console.error(error);
+      alert("❌ Failed to delete data: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -165,9 +187,87 @@ function AddTransaction({ setResult }) {
         <div style={cardStyle}>
           <h2 style={{ marginTop: 0, marginBottom: "8px", fontSize: "20px" }}>Bulk Upload</h2>
           <p style={{ fontSize: "14px", color: theme.textMuted, marginBottom: "24px" }}>
-            Upload a CSV file to import multiple transactions at once.
+            Upload a CSV or Excel file to import multiple transactions at once.
           </p>
           <UploadForm setResult={setResult} />
+        </div>
+
+        {/* Danger Zone */}
+        <div style={{ ...cardStyle, border: "1px solid #ef4444" }}>
+          <h2 style={{ marginTop: 0, marginBottom: "8px", fontSize: "20px", color: "#ef4444" }}>Danger Zone</h2>
+          <p style={{ fontSize: "14px", color: theme.textMuted, marginBottom: "16px" }}>
+            Permanently delete all your transactions and inventory data. This action cannot be undone.
+          </p>
+
+          {!showDeleteConfirm ? (
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                background: "transparent",
+                color: "#ef4444",
+                border: "1px solid #ef4444",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
+              onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              Clear All Data
+            </button>
+          ) : (
+            <div style={{ background: "rgba(239, 68, 68, 0.05)", padding: "16px", borderRadius: "8px", border: "1px dashed #ef4444" }}>
+              <p style={{ color: theme.text, fontSize: "14px", marginTop: 0, marginBottom: "12px", fontWeight: "500" }}>
+                Are you absolutely sure? Type <strong>DELETE</strong> below to confirm.
+              </p>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <input 
+                  type="text" 
+                  placeholder="Type DELETE" 
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  style={{ ...inputStyle, marginTop: 0, flex: 1, minWidth: "150px" }}
+                />
+                <button 
+                  onClick={handleDeleteAll}
+                  disabled={isDeleting || deleteInput !== "DELETE"}
+                  style={{
+                    background: deleteInput === "DELETE" ? "#ef4444" : theme.border,
+                    color: deleteInput === "DELETE" ? "#ffffff" : theme.textMuted,
+                    padding: "10px 16px",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: deleteInput === "DELETE" ? "pointer" : "not-allowed",
+                    fontWeight: "600",
+                    transition: "all 0.2s ease",
+                    minWidth: "120px"
+                  }}
+                >
+                  {isDeleting ? "Deleting..." : "Confirm Delete"}
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteInput("");
+                  }}
+                  style={{
+                    background: "transparent",
+                    color: theme.text,
+                    border: `1px solid ${theme.border}`,
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

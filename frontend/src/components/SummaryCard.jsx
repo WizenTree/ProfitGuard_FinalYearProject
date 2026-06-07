@@ -14,10 +14,10 @@ function SummaryCard({ title, value, icon, subtext, color }) {
   // Use the color prop passed from the Dashboard, fallback to accent
   const highlightColor = color || theme?.accent || "#3b82f6";
 
-  // Quick formatter to make numbers look like currency (e.g., 10000 -> $10,000)
+  // Formatter to accurately display Indian Rupees
   const formatValue = (val) => {
     if (typeof val === 'number') {
-      return `$${val.toLocaleString()}`;
+      return `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     return val;
   };
@@ -31,11 +31,16 @@ function SummaryCard({ title, value, icon, subtext, color }) {
       // Adds a modern left-side accent stripe based on the specific metric's color
       borderLeft: `4px solid ${highlightColor}`, 
       flex: 1,
+      minWidth: "250px", // Prevents cards from crushing too small on mobile
       display: "flex",
       alignItems: "center",
       gap: "20px",
-      boxShadow: theme?.shadow || "0 4px 6px rgba(0, 0, 0, 0.05)"
-    }}>
+      boxShadow: theme?.shadow || "0 4px 6px rgba(0, 0, 0, 0.05)",
+      transition: "transform 0.2s ease"
+    }}
+    onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-4px)"}
+    onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
+    >
       
       {/* Only render the icon block if an icon is actually passed */}
       {icon && (
@@ -45,24 +50,31 @@ function SummaryCard({ title, value, icon, subtext, color }) {
           color: highlightColor,
           padding: "16px", 
           borderRadius: "12px",
-          fontSize: "24px",
+          fontSize: "28px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          minWidth: "60px",
+          minHeight: "60px"
         }}>
           {icon}
         </div>
       )}
       
       <div>
-        <p style={{ color: mutedColor, margin: 0, fontSize: "14px", fontWeight: "500" }}>
+        <p style={{ color: mutedColor, margin: 0, fontSize: "14px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>
           {title}
         </p>
-        <h3 style={{ margin: "8px 0 0 0", fontSize: "28px", color: textColor, fontWeight: "600" }}>
+        <h3 style={{ margin: "8px 0 0 0", fontSize: "28px", color: textColor, fontWeight: "700" }}>
           {formatValue(value)}
         </h3>
         {subtext && (
-          <p style={{ color: mutedColor, margin: "4px 0 0 0", fontSize: "12px" }}>
+          <p style={{ 
+            color: highlightColor, // Changed subtext to match the highlight color for emphasis
+            margin: "6px 0 0 0", 
+            fontSize: "13px",
+            fontWeight: "600"
+          }}>
             {subtext}
           </p>
         )}

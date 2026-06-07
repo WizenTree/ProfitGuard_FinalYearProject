@@ -1,6 +1,8 @@
+// frontend/src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import SummaryCard from "../components/SummaryCard";
 import ChartSection from "../components/ChartSection";
+import GrowthChart from "../components/GrowthChart"; // NEW IMPORT
 import { getReports } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
@@ -8,14 +10,16 @@ function Dashboard() {
   const { theme } = useTheme();
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState("month"); // NEW STATE
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [period]); // Trigger refresh when period changes
 
   const fetchReports = async () => {
     try {
-      const data = await getReports();
+      setLoading(true);
+      const data = await getReports(period); // Pass period to API
       setReports(data);
     } catch (err) {
       console.error("Failed to load reports", err);
@@ -24,8 +28,8 @@ function Dashboard() {
     }
   };
 
-  if (loading) return <h2 style={{ padding: "20px", color: theme.text }}>Loading...</h2>;
-  if (!reports) return <h2 style={{ padding: "20px", color: theme.text }}>No Data</h2>;
+  if (loading && !reports) return <div style={{ padding: "40px", color: theme.text, textAlign: "center" }}>Fetching your financial data...</div>;
+  if (!reports) return <div style={{ padding: "40px", color: theme.text, textAlign: "center" }}>No Data Available. Please add some transactions.</div>;
 
   const chartData = [
     { name: "Revenue", value: reports.total_revenue },
@@ -33,46 +37,93 @@ function Dashboard() {
     { name: "Profit", value: reports.total_profit }
   ];
 
+  const isProfitable = reports.total_profit >= 0;
+  const profitColor = isProfitable ? "#10b981" : "#ef4444"; 
+  const profitIcon = isProfitable ? "📈" : "📉";
+  const profitTitle = isProfitable ? "Net Profit" : "Net Loss";
+  
+  const profitMargin = reports.total_revenue > 0 
+    ? ((Math.abs(reports.total_profit) / reports.total_revenue) * 100).toFixed(1) 
+    : 0;
+  const marginText = reports.total_revenue > 0 ? `${profitMargin}% ${isProfitable ? 'Margin' : 'Loss'}` : "0% Margin";
+
   return (
-    <div style={{ padding: "30px", color: theme.text }}>
-      <h1 style={{ marginTop: 0 }}>Dashboard Overview</h1>
+    <div style={{ padding: "40px", color: theme.text, maxWidth: "1400px", margin: "0 auto", transition: "all 0.3s ease" }}>
+      
+      {/* Header section */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
+        <div>
+          <h1 style={{ margin: "0 0 8px 0", fontSize: "28px" }}>Dashboard Overview</h1>
+          <p style={{ color: theme.textMuted, margin: 0 }}>A top-level view of your business performance.</p>
+        </div>
+        
+        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          {/* New Time Filter Dropdown */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", background: theme.cardBg, padding: "6px 12px", borderRadius: "8px", border: `1px solid ${theme.border}` }}>
+            <label style={{ color: theme.textMuted, fontSize: "14px", fontWeight: "600" }}>Timeline:</label>
+            <select 
+              value={period} 
+              onChange={(e) => setPeriod(e.target.value)}
+              style={{ padding: "4px 8px", background: "transparent", color: theme.text, border: "none", outline: "none", cursor: "pointer", fontSize: "14px", fontWeight: "500" }}
+            >
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+              <option value="year">Yearly</option>
+            </select>
+          </div>
 
-      <div style={{ display: "flex", gap: "20px", marginTop: "20px", flexWrap: "wrap" }}>
-        {/* Using theme.accent for consistency */}
-        <SummaryCard title="Total Profit" value={reports.total_profit} color={theme.accent} />
-        {/* Using theme values instead of hardcoded colors */}
-        <SummaryCard title="Total Revenue" value={reports.total_revenue} color={theme.accent} /> 
-        <SummaryCard title="Total Cost" value={reports.total_cost} color={theme.textMuted} />
+          <div style={{ 
+            padding: "8px 16px", borderRadius: "20px", 
+            background: isProfitable ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", color: profitColor, fontWeight: "600",
+            display: "flex", alignItems: "center", gap: "8px", border: `1px solid ${isProfitable ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)"}`
+          }}>
+            <span style={{ fontSize: "18px" }}>{isProfitable ? "✅" : "⚠️"}</span>
+            {isProfitable ? "Business is Profitable" : "Currently Operating at a Loss"}
+          </div>
+        </div>
       </div>
 
-      <ChartSection data={chartData} theme={theme} />
-
-      <div style={{
-        background: theme.cardBg,
-        padding: "24px",
-        borderRadius: "12px",
-        marginTop: "24px",
-        border: `1px solid ${theme.border}`,
-        boxShadow: theme.shadow
-      }}>
-        <h3 style={{ marginTop: 0, marginBottom: "15px" }}>Top Selling Products</h3>
-
-        {reports.top_products.length === 0 ? (
-          <p style={{ color: theme.textMuted }}>No sales yet</p>
-        ) : (
-          reports.top_products.map((item, index) => (
-            <div key={index} style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "12px 0",
-              borderBottom: `1px solid ${theme.border}`
-            }}>
-              <span style={{ fontWeight: "500" }}>{item.product}</span>
-              <span style={{ color: theme.textMuted }}>{item.total_quantity} units</span>
-            </div>
-          ))
-        )}
+      <div style={{ display: "flex", gap: "24px", marginBottom: "32px", flexWrap: "wrap" }}>
+        <SummaryCard title="Total Revenue" value={reports.total_revenue} icon="💰" color={theme.accent} />
+        <SummaryCard title="Total Cost" value={reports.total_cost} icon="📦" color="#f59e0b" />
+        <SummaryCard title={profitTitle} value={Math.abs(reports.total_profit)} icon={profitIcon} subtext={marginText} color={profitColor} />
       </div>
+
+      {/* New Growth Chart placed prominently across the width */}
+      {reports.growth_data && reports.growth_data.length > 0 && (
+        <GrowthChart data={reports.growth_data} theme={theme} />
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "24px", marginTop: "24px" }}>
+        <div style={{ flex: 2, minWidth: 0 }}>
+          <ChartSection data={chartData} theme={theme} />
+        </div>
+
+        <div style={{ background: theme.cardBg, padding: "24px", borderRadius: "12px", border: `1px solid ${theme.border}`, boxShadow: theme.shadow, display: "flex", flexDirection: "column", flex: 1 }}>
+          <h3 style={{ marginTop: 0, marginBottom: "20px", fontSize: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>⭐</span> Top Selling Products
+          </h3>
+          <div style={{ flexGrow: 1, overflowY: "auto", paddingRight: "8px" }}>
+            {reports.top_products.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 0", color: theme.textMuted }}>No sales data yet.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {reports.top_products.map((item, index) => (
+                  <div key={index} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: theme.bg, borderRadius: "8px", border: `1px solid ${theme.border}`, transition: "transform 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.transform = "translateX(4px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateX(0)"}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: theme.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold" }}>{index + 1}</div>
+                      <span style={{ fontWeight: "600", fontSize: "15px" }}>{item.product}</span>
+                    </div>
+                    <span style={{ color: theme.accent, fontWeight: "600", background: `${theme.accent}15`, padding: "4px 10px", borderRadius: "12px", fontSize: "13px" }}>{item.total_quantity} units</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
     </div>
   );
 }
