@@ -28,34 +28,28 @@ function Dashboard() {
     fetchReports();
   }, [period]);
 
-  // UX Polish: Professional Skeleton Loader
   if (loading && !reports) return (
     <div style={{ padding: "40px", maxWidth: "1400px", margin: "0 auto", animation: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}>
       <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
-      
-      {/* Header Skeleton */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
         <div style={{ width: "300px", height: "40px", background: theme.cardBg, borderRadius: "8px" }}></div>
         <div style={{ width: "200px", height: "40px", background: theme.cardBg, borderRadius: "20px" }}></div>
       </div>
-      
-      {/* Cards Skeleton */}
       <div style={{ display: "flex", gap: "24px", marginBottom: "32px", flexWrap: "wrap" }}>
         {[1, 2, 3].map(i => (
           <div key={i} style={{ flex: 1, minWidth: "250px", height: "140px", background: theme.cardBg, borderRadius: "16px", border: `1px solid ${theme.border}` }}></div>
         ))}
       </div>
-      
-      {/* Chart Skeleton */}
       <div style={{ height: "380px", background: theme.cardBg, borderRadius: "12px", border: `1px solid ${theme.border}` }}></div>
     </div>
   );
 
   if (!reports) return <div style={{ padding: "40px", color: theme.text, textAlign: "center" }}>No Data Available. Please add some transactions.</div>;
 
+  // ✅ Updated chart label to COGS
   const chartData = [
     { name: "Revenue", value: reports.total_revenue },
-    { name: "Cost", value: reports.total_cost },
+    { name: "COGS", value: reports.total_cost }, 
     { name: "Profit", value: reports.total_profit }
   ];
 
@@ -106,7 +100,8 @@ function Dashboard() {
 
       <div style={{ display: "flex", gap: "24px", marginBottom: "32px", flexWrap: "wrap" }}>
         <SummaryCard title="Total Revenue" value={reports.total_revenue} icon="💰" color={theme.accent} />
-        <SummaryCard title="Total Cost" value={reports.total_cost} icon="📦" color="#f59e0b" />
+        {/* ✅ Updated Card Title here */}
+        <SummaryCard title="Cost of Goods (COGS)" value={reports.total_cost} icon="📦" color="#f59e0b" />
         <SummaryCard title={profitTitle} value={Math.abs(reports.total_profit)} icon={profitIcon} subtext={marginText} color={profitColor} />
       </div>
 

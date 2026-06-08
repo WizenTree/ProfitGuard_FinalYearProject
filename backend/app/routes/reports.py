@@ -13,21 +13,18 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
 
     total_profit = 0
     total_revenue = 0
-    total_cost = 0  
+    total_cogs = 0  # Changed from total purchases to Cost of Goods Sold (COGS)
 
     product_sales = {}
     growth_dict = {}
 
     # --- UX IMPROVEMENT: Timeline Zero-Padding ---
-    # Guarantee the chart always has a baseline to draw from
     current_year = datetime.utcnow().year
     
     if period == "year":
-        # Add the last 3 years to ensure the line starts at the bottom
         for y in range(current_year - 3, current_year + 1):
             growth_dict[str(y)] = {"revenue": 0, "cost": 0, "profit": 0}
     elif period == "month":
-        # Add all 12 months of the current year
         for m in range(1, 13):
             growth_dict[f"{current_year}-{m:02d}"] = {"revenue": 0, "cost": 0, "profit": 0}
 
@@ -35,7 +32,6 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
     for txn in transactions.find({"user_id": uid}):
         txn_type = txn.get("type")
         revenue = txn.get("total_revenue", 0)
-        cost = txn.get("total_cost", 0)
         profit = txn.get("profit", 0)
         
         # Handle time-series grouping
@@ -55,25 +51,27 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
                 else: 
                     key = date_val.strftime("%Y-%m")
                 
-                # Dynamically add missing dates if they fall outside our padding
                 if key not in growth_dict:
                     growth_dict[key] = {"revenue": 0, "cost": 0, "profit": 0}
                 
+                # ✅ FIX: Only process financial metrics on SALES
                 if txn_type == "sale":
+                    cogs = revenue - profit # Mathematically derive the cost of the items sold
+                    
                     growth_dict[key]["revenue"] += revenue
                     growth_dict[key]["profit"] += profit
-                elif txn_type == "purchase":
-                    growth_dict[key]["cost"] += cost
+                    growth_dict[key]["cost"] += cogs
 
+        # ✅ FIX: Update global totals only for sales
         if txn_type == "sale":
+            cogs = revenue - profit
             total_revenue += revenue
             total_profit += profit
+            total_cogs += cogs
+            
             name = txn.get("display_name", "Unknown")
             quantity = txn.get("quantity", 0)
             product_sales[name] = product_sales.get(name, 0) + quantity
-
-        elif txn_type == "purchase":
-            total_cost += cost
 
     # Sort Top products
     sorted_products = sorted(product_sales.items(), key=lambda x: x[1], reverse=True)
@@ -94,7 +92,7 @@ async def get_reports(period: str = "month", user_data: dict = Depends(get_curre
     return {
         "total_profit": round(total_profit, 2),
         "total_revenue": round(total_revenue, 2),
-        "total_cost": round(total_cost, 2),
+        "total_cost": round(total_cogs, 2), # Sending COGS to the frontend
         "top_products": top_products,
         "growth_data": growth_data
     }
