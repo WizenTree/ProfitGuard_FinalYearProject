@@ -1,70 +1,43 @@
-# Getting Started with Create React App
+# 🎨 Profit Guard - React Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The frontend is a sleek, highly responsive Single Page Application (SPA) built with React. It utilizes a custom, modular CSS design system to avoid the bloat of external component libraries while maintaining absolute design consistency.
 
-## Available Scripts
+## 🧩 Architectural Highlights
+* **Singleton API Service:** All HTTP requests are routed through an Object-Oriented `ApiService` class that handles Axios interceptors and automatic JWT injection.
+* **Modular UI Components:** Buttons, Inputs, and Tables are abstracted into reusable functional components (`<Button />`, `<Input />`).
+* **CSS Custom Properties (Variables):** Global theming (Light/Dark mode) is managed natively via CSS variables (`var(--bg-color)`) in `index.css`.
+* **Optimistic UI Updates:** Deleting or adding inventory updates the React state instantly without requiring a full page reload.
 
-In the project directory, you can run:
+## 🛠️ Setup & Installation
 
-### `npm start`
+### 1. Install Dependencies
+Ensure you have Node.js installed, then run:
+\`\`\`bash
+npm install
+\`\`\`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 2. Environment Configuration
+Create a `.env` file in the root of the `frontend` folder. You must provide your Firebase configuration and the Backend URL:
+\`\`\`env
+REACT_APP_API_URL="http://127.0.0.1:8000"
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+REACT_APP_FIREBASE_API_KEY="your_api_key"
+REACT_APP_FIREBASE_AUTH_DOMAIN="your_project.firebaseapp.com"
+REACT_APP_FIREBASE_PROJECT_ID="your_project_id"
+REACT_APP_FIREBASE_STORAGE_BUCKET="your_project.appspot.com"
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID="123456789"
+REACT_APP_FIREBASE_APP_ID="1:123456789:web:abcdef"
+\`\`\`
 
-### `npm test`
+### 3. Start the Development Server
+\`\`\`bash
+npm start
+\`\`\`
+The application will launch at `http://localhost:3000`.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📁 Folder Structure
+* `/src/components/`: Reusable UI elements (Modals, Tables, Charts).
+* `/src/components/ui/`: Core atomic design components (Button, Input).
+* `/src/pages/`: Main application views (Dashboard, Inventory, Ledger).
+* `/src/services/`: API configuration and Firebase initialization.
+* `/src/context/`: Global state managers (AuthContext, ThemeContext).

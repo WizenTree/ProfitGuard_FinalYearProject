@@ -1,120 +1,34 @@
-# 📈 Profit Guard: AI-Powered Inventory & Profit Management
+# 🛡️ Profit Guard - Inventory & Profit Management System
 
-**Profit Guard** is a final-year project designed to empower small-scale e-commerce sellers on platforms like Shopify and Amazon. It eliminates the manual effort of tracking expenses by combining OCR-based receipt extraction with automated profit analytics.
+**Profit Guard** is a comprehensive, full-stack web application designed to help retail and wholesale businesses seamlessly track inventory, manage transactions, and analyze financial growth. Built as a Final Year Project, it emphasizes enterprise-grade architecture, strict modularity, and an intuitive user experience.
 
----
+## ✨ Key Features
+* **Financial Analytics Dashboard:** Calculates true Cost of Goods Sold (COGS), Net Profit, and Profit Margins dynamically.
+* **Interactive Data Visualizations:** Real-time growth charts and top-selling product metrics using Recharts.
+* **Smart Transaction Ledger:** Advanced client-side filtering, searching, and sorting with a custom autocomplete engine.
+* **Bulk Data Processing:** Upload thousands of transactions instantly via CSV or Excel (`.xlsx`) files.
+* **Secure Authentication:** Multi-provider authentication using Firebase (Google OAuth & Email/Password).
+* **Enterprise Architecture:** Features a custom CSS design system on the frontend and an Object-Oriented Service Layer on the backend.
 
-## 🚀 Project Overview
+## 💻 Tech Stack
+* **Frontend:** React.js, Context API, Axios, Recharts, Firebase Auth v9+.
+* **Backend:** Python, FastAPI, Uvicorn, PyMongo.
+* **Database:** MongoDB (NoSQL).
+* **Authentication:** Firebase Auth & Firebase Admin SDK.
 
-Small sellers often struggle to track hidden platform fees, shipping costs, and fluctuating supplier prices. Profit Guard solves this by providing a streamlined dashboard that visualizes profitability in real-time.
+## 🚀 Quick Start Guide
 
-### Key Features
+### 1. Clone the Repository
+\`\`\`bash
+git clone https://github.com/your-username/profitguard_finalyearproject.git
+cd profitguard_finalyearproject
+\`\`\`
 
-- **Automated Data Entry:** Upload receipt images and use OCR to extract cost data automatically.
-- **Smart Dashboard:** Visualize sales trends and profit margins.
-- **Profitability Alerts:** Immediate visual cues (Red/Yellow/Green) when products become unprofitable based on dynamic costs.
-- **CSV Bulk Processing:** Seamlessly upload and analyze large sales datasets.
+### 2. Run the Backend
+Navigate to the `backend` directory, set up your Python virtual environment, install dependencies, and start the FastAPI server. (See `backend/README.md` for detailed instructions and `.env` setup).
 
----
-
-## 🏗️ Technical Stack
-
-### Frontend
-- **Framework:** React.js
-- **Styling:** Tailwind CSS
-- **Charts:** Chart.js / Recharts for data visualization
-
-### Backend
-- **Framework:** FastAPI (Python)
-- **OCR Engine:** Tesseract OCR
-- **Data Processing:** Pandas
-- **Database:** MongoDB
-
----
-
-## 📂 Architecture
-
-The system follows a modular, scalable architecture:
-
-```text
-Frontend (React)
-        ↕
-FastAPI (Backend)
-        ↕
-MongoDB Atlas
-```
+### 3. Run the Frontend
+Navigate to the `frontend` directory, install the Node modules, and start the React development server. (See `frontend/README.md` for detailed instructions and `.env` setup).
 
 ---
-
-## ⚙️ Quick Start
-
-### Prerequisites
-
-- Python 3.9+
-- Node.js & npm
-- MongoDB Atlas Account
-
-### Setup Instructions
-
-#### 1. Clone the Repository
-
-```bash
-git clone https://github.com/WizenTree/ProfitGuard_FinalYearProject/
-cd ProfitGuard_FinalYearProject
-```
-
-#### 2. Backend Setup
-
-```bash
-cd backend
-
-python -m venv venv
-
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-
-# Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-
-# Create a .env file and add:
-# MONGO_URL=your_connection_string
-
-uvicorn app.main:app --reload
-```
-
-#### 3. Frontend Setup
-
-```bash
-cd ../frontend
-
-npm install
-npm start
-```
-
----
-
-## 📊 Workflow
-
-1. **Upload** – User uploads a sales CSV or receipt image.
-2. **Process** – Backend runs OCR and structured data parsing.
-3. **Analyze** – Profit engine calculates real-time margins.
-4. **Display** – Interactive dashboard displays insights and loss alerts.
-
----
-
-## 👥 Project Team
-
-### WizenTree
-**Backend & AI/ML Development**
-
-### Knex3
-**Frontend & Integration Engineering**
-
----
-
-## 📜 License
-
-This project was developed for academic purposes as part of a final-year BCA degree.
+*Developed as a Final Year Academic Project.*
