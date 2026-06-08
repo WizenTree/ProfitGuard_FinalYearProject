@@ -10,8 +10,9 @@ function Products() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await getInventory();
-        setProducts(data.items || []);
+        const response = await getInventory();
+        // ✅ Change .items to .data here as well
+        setProducts(response.data || []);
       } catch (error) {
         console.error("Failed to load products:", error);
       } finally {

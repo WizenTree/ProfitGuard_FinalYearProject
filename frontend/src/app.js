@@ -1,10 +1,15 @@
+// frontend/src/App.js
 import React, { useState } from "react";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import AddTransaction from "./pages/AddTransaction";
 import TransactionHistory from "./pages/TransactionHistory";
-import Inventory from "./pages/Inventory"; // ✅ Import newly created page
-import Products from "./pages/Products";   // ✅ Import newly created page
+import Inventory from "./pages/Inventory"; 
+import Products from "./pages/Products";   
+
+// ✅ 1. Import ToastContainer and its CSS
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -19,18 +24,23 @@ function App() {
       case "Transactions History":
         return <TransactionHistory />;
       case "Inventory":
-        return <Inventory />; // ✅ Render Inventory page
+        return <Inventory />; 
       case "Products":
-        return <Products />;  // ✅ Render Products page
+        return <Products />;  
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <Layout activePage={activePage} setActivePage={setActivePage}>
-      {renderPage()}
-    </Layout>
+    <>
+      {/* ✅ 2. Add ToastContainer so alerts become visible */}
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      
+      <Layout activePage={activePage} setActivePage={setActivePage}>
+        {renderPage()}
+      </Layout>
+    </>
   );
 }
 

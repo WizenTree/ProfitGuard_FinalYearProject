@@ -1,33 +1,48 @@
 # backend/app/routes/inventory.py
-from fastapi import APIRouter, HTTPException, Depends
-from app.models.database import products
-from app.models.schema import InventoryResponse, InventoryItem
+from fastapi import APIRouter, Depends, HTTPException
+from app.models.database import products  # Import the MongoDB collection directly
+from app.services.inventory_service import InventoryService
 from app.core.auth import get_current_user
 
 router = APIRouter()
 
-@router.get("/", response_model=InventoryResponse)
-async def get_inventory(skip: int = 0, limit: int = 500, user_data: dict = Depends(get_current_user)):
-    uid = user_data.get("uid")
-    items = []
+# Dependency Provider for FastAPI
+def get_inventory_service():
+    # Instantiate the OOP class using your MongoDB products collection
+    return InventoryService(products)
+
+
+@router.get("/")
+def get_inventory(
+    service: InventoryService = Depends(get_inventory_service), 
+    user: dict = Depends(get_current_user)
+):
+    """
+    HTTP Controller for fetching inventory.
+    """
+    user_id = user.get("uid")
     
-    # Added pagination limits
-    for product in products.find({"user_id": uid}).sort("updated_at", -1).skip(skip).limit(limit):
-        items.append(
-            InventoryItem(
-                name=product.get("name"),
-                display_name=product.get("display_name", product.get("name")),
-                stock=product.get("stock", 0),
-                avg_cost=product.get("avg_cost", 0.0),
-                updated_at=product.get("updated_at")
-            )
-        )
-    return {"items": items}
+    # Delegate business logic to the service
+    data = service.get_user_inventory(user_id)
+    
+    return {"status": "success", "data": data}
+
 
 @router.delete("/{product_name}")
-async def delete_product(product_name: str, user_data: dict = Depends(get_current_user)):
-    uid = user_data.get("uid")
-    result = products.delete_one({"name": product_name, "user_id": uid})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Product not found or unauthorized")
-    return {"message": f"Product '{product_name}' successfully deleted"}
+def delete_product(
+    product_name: str,
+    service: InventoryService = Depends(get_inventory_service),
+    user: dict = Depends(get_current_user)
+):
+    """
+    HTTP Controller for deleting a product.
+    """
+    user_id = user.get("uid")
+    
+    # Delegate business logic to the service
+    success = service.delete_product_by_name(user_id, product_name)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Product not found")
+        
+    return {"status": "success", "message": f"'{product_name}' deleted successfully"}

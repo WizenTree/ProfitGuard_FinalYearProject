@@ -10,8 +10,9 @@ function Inventory() {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const data = await getInventory();
-        setInventory(data.items || []);
+        const response = await getInventory();
+        // ✅ Change .items to .data to match the backend response
+        setInventory(response.data || []); 
       } catch (error) {
         console.error("Failed to load inventory:", error);
       } finally {
